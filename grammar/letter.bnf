@@ -5,13 +5,17 @@
 
 %%
 
-\s+        /* skip whitespace */
+\/\/.*           /* skip inline comments */
 
-\d+        return 'NUMBER'
+\/\*(.|\s)*\*\/  /* skip multi-line comments */
+
+\s+              /* skip whitespace */
+
+\d+              return 'NUMBER'
 
 // Operator Groups
-[+/-]      return 'ADDITIVE_OPERATOR'
-[*//]      return 'MULTIPLICATIVE_OPERATOR'
+[+/-]            return 'ADDITIVE_OPERATOR'
+[*//]            return 'MULTIPLICATIVE_OPERATOR'
 
 /lex
 
@@ -59,16 +63,22 @@ Statement
   ;
 
 BlockStatement
-  : '{' StatementList '}' 
+  : '{' OptStatementList '}' 
     { 
       $$ = 
         {
           type: 'BlockStatement',
-          statementList: $2,
+          body: $2,
         }
     }
   ;
-  
+
+OptStatementList
+  : StatementList
+  | /* empty */
+    { $$ = [] }
+  ;
+
 ExpressionStatement
   : Expression ';'
     { 
