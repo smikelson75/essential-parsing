@@ -16,9 +16,79 @@
 /lex
 
 //--------------------------------------------------------------
+// Module include
+
+%{ 
+  function BinaryExpression(left, opt, right) {
+    return {
+      type: 'BinaryExpression',
+      op: opt,
+      left: left,
+      right: right,
+    };
+  }
+%}
+
+//--------------------------------------------------------------
 // Syntactic Grammer
 
 %%
+
+Program
+  : StatementList
+    { 
+      $$ = 
+        {
+          type: 'Program',
+          body: $1,
+        }
+    }
+  ;
+
+StatementList
+  : Statement
+    { $$ = [$1] }
+  | StatementList Statement
+    { $1.push($2); $$ = $1 }
+  ;
+
+Statement
+  : ExpressionStatement
+  | EmptyStatement
+  | BlockStatement
+  ;
+
+BlockStatement
+  : '{' StatementList '}' 
+    { 
+      $$ = 
+        {
+          type: 'BlockStatement',
+          statementList: $2,
+        }
+    }
+  ;
+  
+ExpressionStatement
+  : Expression ';'
+    { 
+      $$ = 
+        {
+          type: 'ExpressionStatement',
+          expression: $1,
+        }
+    }
+  ;
+
+EmptyStatement
+  : ';'
+    {
+      $$ = 
+        {
+          type: 'EmptyStatement',
+        }
+    }
+  ;
 
 // Lowest Precedence
 Expression
@@ -27,29 +97,13 @@ Expression
 
 AdditiveExpression 
   : AdditiveExpression ADDITIVE_OPERATOR MultiplicativeExpression 
-    { 
-      $$ = 
-        {
-          type: 'BinaryExpression',
-          op: $2,
-          left: $1,
-          right: $3,
-        }
-    }
+    { $$ = BinaryExpression($1, $2, $3) }
   | MultiplicativeExpression
   ;
 
 MultiplicativeExpression
   : MultiplicativeExpression MULTIPLICATIVE_OPERATOR Factor 
-    { 
-      $$ = 
-        {
-            type: 'BinaryExpression',
-            op: $2,
-            left: $1,
-            right: $3,
-        }
-    }
+    { $$ = BinaryExpression($1, $2, $3) }
   | Factor
   ;
 
